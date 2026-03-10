@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>SMS Controller · Secure</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        /* login popup - full screen */
+        .login-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .login-card {
+            background: linear-gradient(145deg, #1e2c42, #152233);
+            border-radius: 40px;
+            padding: 35px 25px;
+            width: 90%;
+            max-width: 380px;
+            border: 2px solid #4a6fa5;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .globe-logo {
+            text-align: center;
+            font-size: 5rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 10px 10px #4a6fa5);
+        }
+
+        .login-card h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #a0b8d9;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px 22px;
+            background: #0f1a2b;
+            border: 2px solid #3f5a8a;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            color: white;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #4cd964;
+        }
+
+        .login-btn {
+            background: linear-gradient(145deg, #4cd964, #2ecc71);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 40px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 20px;
+            border: 2px solid white;
+            box-shadow: 0 10px 20px rgba(76, 217, 100, 0.4);
+            cursor: pointer;
+        }
+
+        .error-msg {
+            color: #ff5e5e;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 1rem;
+            display: none;
+        }
+
+        /* main app container - initially hidden */
+        .mobile-container {
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* header */
+        .app-header {
+            background: linear-gradient(145deg, #3b4d7a, #25355a);
+            padding: 12px 15px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 12px rgba(0,0,0,0.6);
+            border: 1px solid #5a7bb3;
+        }
+        .app-header i {
+            font-size: 1.5rem;
+            color: #ffdb7e;
+            background: #1f2a44;
+            padding: 8px;
+            border-radius: 50%;
+        }
+        .app-header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 1px 1px 0 #00000050;
+            flex: 1;
+        }
+        .all-sms-btn {
+            background: #ffaa33;
+            color: #0f172a;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid white;
+            box-shadow: 0 3px 6px black;
+            cursor: pointer;
+        }
+
+        /* status card */
+        .status-card {
+            background: #1e2c42;
+            border-radius: 30px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #4cd964;
+        }
+        .status-icon i {
+            font-size: 1.8rem;
+            color: #4cd964;
+        }
+        .status-text {
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+        }
+        .status-small {
+            color: #a0b8d9;
+            font-size: 0.8rem;
+        }
+
+        /* client list */
+        .client-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 65vh;
+            overflow-y: auto;
+            padding: 4px 2px;
+        }
+
+        .client-card {
+            background: linear-gradient(145deg, #263652, #1a263b);
+            border-radius: 30px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.6);
+        }
+        .client-card.online { border-color: #4cd964; }
+        .client-card.offline { border-color: #ff5e5e; }
+        .client-card:active { transform: scale(0.98); }
+
+        .client-number {
+            background: #ffb347;
+            color: #0f172a;
+            width: 40px;
+            height: 40px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            border: 2px solid white;
+            box-shadow: 0 3px 5px black;
+        }
+
+        .client-info {
+            flex: 1;
+        }
+        .client-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .client-meta {
+            display: flex;
+            gap: 15px;
+            color: #b8d0f0;
+            font-size: 0.85rem;
+        }
+        .client-meta i { color: #f1c40f; width: 16px; font-size: 0.85rem; }
+
+        .client-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+        .online-badge, .offline-badge {
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: white;
+        }
+        .online-badge { background: #4cd964; }
+        .offline-badge { background: #ff5e5e; }
+        .battery-tag {
+            background: #f1c40f;
+            color: #0f172a;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.7rem;
+        }
+
+        /* full-screen popup */
+        .popup-full {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f172a;
+            z-index: 2000;
+            flex-direction: column;
+            animation: slideIn 0.2s;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .popup-header {
+            background: linear-gradient(145deg, #2d406b, #1a2a4a);
+            padding: 15px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid #f1c40f;
+        }
+        .popup-header i {
+            font-size: 1.6rem;
+            color: #ffdb7e;
+            background: #0f1a30;
+            padding: 8px;
+            border-radius: 50%;
+        }
+        .popup-header h2 {
+            font-size: 1.3rem;
+            color: white;
+            font-weight: 600;
+            flex: 1;
+        }
+        .close-btn {
+            background: #ff5e5e;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+
+        .popup-content {
+            padding: 18px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* device summary */
+        .device-summary {
+            background: #1e2c42;
+            border-radius: 25px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #3a5a9c;
+        }
+        .device-icon {
+            background: #ffb347;
+            width: 45px;
+            height: 45px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #0f172a;
+            border: 2px solid white;
+        }
+        .device-summary-text {
+            flex: 1;
+        }
+        .device-summary-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+        }
+        .device-summary-battery {
+            font-size: 0.9rem;
+            color: #f1c40f;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* action grid */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .action-card {
+            background: linear-gradient(145deg, #263e68, #1a2d4f);
+            border-radius: 25px;
+            padding: 15px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.5);
+        }
+        .action-card:active { transform: scale(0.95); }
+        .action-card.send { border-color: #4cd964; }
+        .action-card.view { border-color: #ffb347; }
+        .action-card.details { border-color: #ff5e5e; }
+        .action-card i { font-size: 1.8rem; }
+        .action-card.send i { color: #4cd964; }
+        .action-card.view i { color: #ffb347; }
+        .action-card.details i { color: #ff5e5e; }
+        .action-card span { color: white; font-weight: 600; font-size: 0.8rem; }
+
+        /* detail panel */
+        .detail-panel {
+            background: #1a263b;
+            border-radius: 25px;
+            padding: 15px;
+            border: 1px solid #4a6fa5;
+            margin-top: 8px;
+            display: none;
+        }
+        .detail-panel.show { display: block; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #3a4a6a;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .detail-label { color: #a0b8d9; }
+
+        /* sms list */
+        .sms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .sms-item {
+            background: #1e2c42;
+            border-radius: 22px;
+            padding: 14px 16px;
+            border-left: 5px solid #4cd964;
+            color: white;
+        }
+        .sms-item .device-badge {
+            display: inline-block;
+            background: #ffb347;
+            color: #0f172a;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            border: 1px solid white;
+        }
+        .sms-item strong {
+            font-size: 1rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .sms-item p {
+            font-size: 0.95rem;
+            margin: 6px 0;
+        }
+        .sms-item small {
+            color: #a0b8d9;
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 6px;
+        }
+
+        /* form elements */
+        .file-label {
+            background: #2a3f6e;
+            color: white;
+            padding: 15px 18px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            font-size: 1rem;
+            border: 1px dashed #ffd966;
+            cursor: pointer;
+        }
+        .file-label i { font-size: 1.4rem; }
+        #csvFile { display: none; }
+        .input-field {
+            width: 100%;
+            padding: 15px 18px;
+            background: #0f1a2b;
+            border: 1px solid #3f5a8a;
+            border-radius: 40px;
+            font-size: 1rem;
+            color: white;
+            margin-bottom: 15px;
+        }
+        .btn-send {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        .btn-send i { font-size: 1.4rem; }
+
+        /* live report stats */
+        .report-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #1e2c42;
+            border-radius: 40px;
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border: 2px solid #4a6fa5;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #a0b8d9;
+        }
+        .stat-item.sent .stat-value { color: #4cd964; }
+        .stat-item.failed .stat-value { color: #ff5e5e; }
+        .stat-item.pending .stat-value { color: #ffb347; }
+
+        .report-list {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .report-item {
+            background: #1a263b;
+            border-radius: 22px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid;
+            font-size: 0.9rem;
+        }
+        .report-item.sent { border-left-color: #4cd964; }
+        .report-item.failed { border-left-color: #ff5e5e; }
+        .report-item.pending { border-left-color: #ffb347; }
+        .report-number {
+            font-weight: 600;
+            color: white;
+        }
+        .report-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        .report-status i.sent { color: #4cd964; }
+        .report-status i.failed { color: #ff5e5e; }
+        .report-status i.pending { color: #ffb347; }
+        .report-reason {
+            color: #ffb347;
+            font-size: 0.8rem;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <!-- login popup -->
+    <div id="loginPopup" class="login-popup">
+        <div class="login-card">
+            <div class="globe-logo">🌏</div>
+            <h2>Admin Login</h2>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" class="input-field" placeholder="Enter username">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" class="input-field" placeholder="Enter password">
+            </div>
+            <button class="login-btn" onclick="doLogin()">LOGIN</button>
+            <div id="loginError" class="error-msg">Invalid credentials</div>
+        </div>
+    </div>
+
+    <!-- main app container -->
+    <div id="mainApp" class="mobile-container">
+        <!-- header -->
+        <div class="app-header">
+            <i class="fas fa-bolt"></i>
+            <h1>SMS CONTROL</h1>
+            <div class="all-sms-btn" onclick="openAllSmsPopup()">
+                <i class="fas fa-envelope-open-text"></i>
+            </div>
+        </div>
+
+        <!-- status -->
+        <div class="status-card">
+            <div class="status-icon"><i class="fas fa-wifi"></i></div>
+            <div>
+                <div class="status-text">Online · 6 devices</div>
+                <div class="status-small">last update: now</div>
+            </div>
+        </div>
+
+        <!-- client list -->
+        <div class="client-list" id="clientList"></div>
+    </div>
+
+    <!-- popup: device detail + actions -->
+    <div id="devicePopup" class="popup-full">
+        <div class="popup-header">
+            <i class="fas fa-mobile-alt"></i>
+            <h2 id="devicePopupTitle">Device</h2>
+            <div class="close-btn" onclick="closePopup('devicePopup')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="popup-content" id="devicePopupContent"></div>
+    </div>
+
+    <!-- popup: send sms (with csv upload) -->
+    <div id="sendSmsPopup" class="popup-full">
+        <div class="popup-header">
+            <i class="fas fa-paper-plane"></i>
+            <h2>Send SMS</h2>
+            <div class="close-btn" onclick="closePopup('sendSmsPopup')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="popup-content">
+            <div class="device-summary" id="sendSmsDeviceInfo"></div>
+            <input type="file" id="csvFile" accept=".csv">
+            <div class="file-label" onclick="document.getElementById('csvFile').click()">
+                <i class="fas fa-file-csv"></i> choose CSV file
+            </div>
+            <textarea id="smsMessage" class="input-field" rows="3" placeholder="type message..."></textarea>
+            <button class="btn-send" onclick="sendBulkSms()">
+                <i class="fas fa-rocket"></i> send to all
+            </button>
+            <div id="bulkProgress" style="color:#2ecc71; text-align:center; font-size:0.9rem;"></div>
+        </div>
+    </div>
+
+    <!-- popup: live bulk report (5-5 batch) -->
+    <div id="bulkReportPopup" class="popup-full">
+        <div class="popup-header">
+            <i class="fas fa-chart-bar"></i>
+            <h2>Live Report</h2>
+            <div class="close-btn" onclick="closePopup('bulkReportPopup')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="popup-content">
+            <div class="report-stats" id="reportStats">
+                <div class="stat-item sent">
+                    <div class="stat-value" id="statSent">0</div>
+                    <div class="stat-label">SENT</div>
+                </div>
+                <div class="stat-item failed">
+                    <div class="stat-value" id="statFailed">0</div>
+                    <div class="stat-label">FAILED</div>
+                </div>
+                <div class="stat-item pending">
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">PENDING</div>
+                </div>
+            </div>
+            <div class="report-list" id="reportList"></div>
+        </div>
+    </div>
+
+    <!-- popup: view sms (single device) -->
+    <div id="viewSmsPopup" class="popup-full">
+        <div class="popup-header">
+            <i class="fas fa-envelope-open-text"></i>
+            <h2>Device SMS</h2>
+            <div class="close-btn" onclick="closePopup('viewSmsPopup')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="popup-content" id="viewSmsContent"></div>
+    </div>
+
+    <!-- popup: all sms (all devices) -->
+    <div id="allSmsPopup" class="popup-full">
+        <div class="popup-header">
+            <i class="fas fa-envelope-open-text"></i>
+            <h2>All SMS</h2>
+            <div class="close-btn" onclick="closePopup('allSmsPopup')"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="popup-content" id="allSmsContent"></div>
+    </div>
+
+    <script>
+        // ---------- LOGIN FUNCTION ----------
+        function doLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // hardcoded credentials (not visible anywhere in UI)
+            if (username === 'Raj' && password === 'Raj@1994') {
+                document.getElementById('loginPopup').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'flex';
+                // start the app after login
+                initApp();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        // ---------- APP INIT (called after successful login) ----------
+        function initApp() {
+            // dummy data
+            devices = [
+                { id: 'd1', number: 1, brand: 'Samsung', model: 'M31', battery: 87, online: true, lastSeen: '2025-03-10T14:30:00' },
+                { id: 'd2', number: 2, brand: 'Xiaomi', model: 'Redmi 9', battery: 23, online: false, lastSeen: '2025-03-09T22:10:00' },
+                { id: 'd3', number: 3, brand: 'OnePlus', model: 'Nord CE3', battery: 56, online: true, lastSeen: '2025-03-10T15:45:00' },
+                { id: 'd4', number: 4, brand: 'Apple', model: 'iPhone 13', battery: 94, online: true, lastSeen: '2025-03-10T09:20:00' },
+                { id: 'd5', number: 5, brand: 'Vivo', model: 'Y20', battery: 12, online: false, lastSeen: '2025-03-08T19:30:00' },
+                { id: 'd6', number: 6, brand: 'Realme', model: 'GT 2', battery: 68, online: true, lastSeen: '2025-03-10T16:10:00' }
+            ];
+
+            smsData = {
+                'd1': [
+                    { from: '9876543210', body: 'Hello, how are you?', time: '2025-03-10 10:35' },
+                    { from: '9988776655', body: 'Reminder: meeting at 3', time: '2025-03-10 09:12' }
+                ],
+                'd2': [
+                    { from: '9123456789', body: 'OTP 123456', time: '2025-03-09 22:20' }
+                ],
+                'd3': [],
+                'd4': [
+                    { from: '8877665544', body: 'Bank alert: ₹5000 debited', time: '2025-03-10 08:05' },
+                    { from: '8877665544', body: 'Bank alert: ₹200 credited', time: '2025-03-09 19:30' }
+                ],
+                'd5': [],
+                'd6': [
+                    { from: '9998887770', body: 'Tomorrow\'s program cancelled', time: '2025-03-10 12:15' }
+                ]
+            };
+
+            liveReports = {};
+            currentBatchId = null;
+            selectedDeviceId = null;
+
+            renderClientList();
+            connectWebSocket();
+        }
+
+        // ---------- WEBSOCKET SIMULATION ----------
+        let liveReports = {};
+        let currentBatchId = null;
+        let selectedDeviceId = null;
+        let devices = [];
+        let smsData = {};
+
+        function connectWebSocket() {
+            console.log('WebSocket connected (demo)');
+            setInterval(() => {
+                if (currentBatchId && liveReports[currentBatchId]) {
+                    const report = liveReports[currentBatchId];
+                    const pendingNumbers = Object.entries(report.details)
+                        .filter(([_, d]) => d.status === 'pending')
+                        .map(([num]) => num);
+                    
+                    if (pendingNumbers.length > 0) {
+                        const randomNum = pendingNumbers[Math.floor(Math.random() * pendingNumbers.length)];
+                        const rand = Math.random();
+                        if (rand < 0.8) {
+                            report.details[randomNum].status = 'sent';
+                            report.sent++;
+                        } else {
+                            report.details[randomNum].status = 'failed';
+                            report.details[randomNum].reason = 'network error';
+                            report.failed++;
+                        }
+                        report.pending--;
+                        updateReportUI(currentBatchId);
+                    }
+                }
+            }, 3000);
+        }
+
+        // ---------- RENDER CLIENT LIST ----------
+        function renderClientList() {
+            const sorted = [...devices].sort((a,b) => new Date(b.lastSeen) - new Date(a.lastSeen));
+            const list = document.getElementById('clientList');
+            list.innerHTML = '';
+            sorted.forEach(dev => {
+                const card = document.createElement('div');
+                card.className = `client-card ${dev.online ? 'online' : 'offline'}`;
+                card.dataset.id = dev.id;
+                card.innerHTML = `
+                    <div class="client-number">${dev.number}</div>
+                    <div class="client-info">
+                        <div class="client-name">${dev.brand} ${dev.model}</div>
+                        <div class="client-meta">
+                            <span><i class="fas fa-battery-three-quarters"></i> ${dev.battery}%</span>
+                            <span><i class="fas fa-clock"></i> ${new Date(dev.lastSeen).toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+                    <div class="client-badge">
+                        <span class="${dev.online ? 'online-badge' : 'offline-badge'}">${dev.online ? 'ONLINE' : 'OFFLINE'}</span>
+                        <span class="battery-tag">🔋${dev.battery}%</span>
+                    </div>
+                `;
+                card.addEventListener('click', () => openDevicePopup(dev.id));
+                list.appendChild(card);
+            });
+        }
+
+        // ---------- POPUP CONTROLS ----------
+        function openPopup(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closePopup(id) {
+            document.getElementById(id).style.display = 'none';
+            if (id === 'bulkReportPopup') {
+                currentBatchId = null;
+            }
+        }
+
+        // ---------- DEVICE POPUP ----------
+        function openDevicePopup(deviceId) {
+            selectedDeviceId = deviceId;
+            const dev = devices.find(d => d.id === deviceId);
+            if (!dev) return;
+
+            document.getElementById('devicePopupTitle').innerText = `Device #${dev.number}`;
+            const content = document.getElementById('devicePopupContent');
+            content.innerHTML = `
+                <div class="device-summary">
+                    <div class="device-icon">${dev.number}</div>
+                    <div class="device-summary-text">
+                        <div class="device-summary-name">${dev.brand} ${dev.model}</div>
+                        <div class="device-summary-battery"><i class="fas fa-battery-half"></i> battery: ${dev.battery}%</div>
+                    </div>
+                </div>
+
+                <div class="action-grid">
+                    <div class="action-card send" onclick="openSendSmsPopup('${deviceId}')">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send SMS</span>
+                    </div>
+                    <div class="action-card view" onclick="openViewSmsPopup('${deviceId}')">
+                        <i class="fas fa-envelope-open-text"></i>
+                        <span>View SMS</span>
+                    </div>
+                    <div class="action-card details" onclick="toggleDetails()">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Details</span>
+                    </div>
+                </div>
+
+                <div class="detail-panel" id="detailPanel">
+                    <div class="detail-row"><span class="detail-label">Device ID</span> <span>${dev.id}</span></div>
+                    <div class="detail-row"><span class="detail-label">Brand</span> <span>${dev.brand}</span></div>
+                    <div class="detail-row"><span class="detail-label">Model</span> <span>${dev.model}</span></div>
+                    <div class="detail-row"><span class="detail-label">Battery</span> <span>${dev.battery}%</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span> <span>${dev.online ? 'ONLINE' : 'OFFLINE'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Last seen</span> <span>${new Date(dev.lastSeen).toLocaleString('en-US')}</span></div>
+                </div>
+            `;
+            openPopup('devicePopup');
+        }
+
+        function toggleDetails() {
+            const panel = document.getElementById('detailPanel');
+            panel.classList.toggle('show');
+        }
+
+        // ---------- SEND SMS POPUP ----------
+        function openSendSmsPopup(deviceId) {
+            const dev = devices.find(d => d.id === deviceId);
+            if (!dev) return;
+            document.getElementById('sendSmsDeviceInfo').innerHTML = `
+                <div class="device-icon">${dev.number}</div>
+                <div class="device-summary-text">
+                    <div class="device-summary-name">${dev.brand} ${dev.model}</div>
+                    <div class="device-summary-battery">battery: ${dev.battery}%</div>
+                </div>
+            `;
+            document.getElementById('csvFile').value = '';
+            document.getElementById('smsMessage').value = '';
+            document.getElementById('bulkProgress').innerHTML = '';
+            closePopup('devicePopup');
+            openPopup('sendSmsPopup');
+        }
+
+        // ---------- VIEW SMS POPUP ----------
+        function openViewSmsPopup(deviceId) {
+            const dev = devices.find(d => d.id === deviceId);
+            const smsList = smsData[deviceId] || [];
+            let html = `<div class="device-summary" style="margin-bottom:10px;">
+                <div class="device-icon">${dev.number}</div>
+                <div><strong style="color:white; font-size:1rem;">${dev.brand} ${dev.model}</strong></div>
+            </div>`;
+            if (smsList.length === 0) {
+                html += '<p style="color:#aaa; text-align:center; font-size:0.9rem;">no sms</p>';
+            } else {
+                html += '<div class="sms-list">';
+                smsList.forEach(s => {
+                    html += `<div class="sms-item">
+                        <strong>${s.from}</strong>
+                        <p>${s.body}</p>
+                        <small>${s.time}</small>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            document.getElementById('viewSmsContent').innerHTML = html;
+            closePopup('devicePopup');
+            openPopup('viewSmsPopup');
+        }
+
+        // ---------- ALL SMS POPUP ----------
+        function openAllSmsPopup() {
+            let allSms = [];
+            devices.forEach(dev => {
+                const list = smsData[dev.id] || [];
+                list.forEach(s => {
+                    allSms.push({
+                        deviceNumber: dev.number,
+                        deviceName: `${dev.brand} ${dev.model}`,
+                        from: s.from,
+                        body: s.body,
+                        time: s.time
+                    });
+                });
+            });
+            allSms.reverse();
+            let html = '';
+            if (allSms.length === 0) {
+                html = '<p style="color:#aaa; text-align:center; font-size:0.9rem;">no sms</p>';
+            } else {
+                html = '<div class="sms-list">';
+                allSms.forEach(s => {
+                    html += `<div class="sms-item">
+                        <span class="device-badge"><i class="fas fa-mobile-alt"></i> device #${s.deviceNumber} · ${s.deviceName}</span>
+                        <strong>${s.from}</strong>
+                        <p>${s.body}</p>
+                        <small>${s.time}</small>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            document.getElementById('allSmsContent').innerHTML = html;
+            openPopup('allSmsPopup');
+        }
+
+        // ---------- BULK SMS SEND ----------
+        function sendBulkSms() {
+            const file = document.getElementById('csvFile').files[0];
+            const message = document.getElementById('smsMessage').value;
+            if (!file) {
+                alert('❌ choose CSV file');
+                return;
+            }
+            if (!message) {
+                alert('❌ type message');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const numbers = e.target.result
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.replace(/\D/g,'').length === 10)
+                    .map(line => line.replace(/\D/g,''));
+                if (numbers.length === 0) {
+                    alert('❌ no valid numbers');
+                    return;
+                }
+                if (numbers.length > 100) {
+                    alert('⚠️ max 100 numbers at a time');
+                    return;
+                }
+
+                const batchId = 'batch_' + Date.now();
+                const details = {};
+                numbers.forEach(num => {
+                    details[num] = { status: 'pending', reason: '' };
+                });
+                liveReports[batchId] = {
+                    total: numbers.length,
+                    sent: 0,
+                    failed: 0,
+                    pending: numbers.length,
+                    details: details
+                };
+                currentBatchId = batchId;
+
+                closePopup('sendSmsPopup');
+                openPopup('bulkReportPopup');
+                updateReportUI(batchId);
+
+                simulateBatchSending(batchId, numbers, message);
+
+                document.getElementById('bulkProgress').innerHTML = `✅ request sent for ${numbers.length} numbers (5-5 batch)`;
+            };
+            reader.readAsText(file);
+        }
+
+        function simulateBatchSending(batchId, numbers, message) {
+            const batchSize = 5;
+            const batches = [];
+            for (let i = 0; i < numbers.length; i += batchSize) {
+                batches.push(numbers.slice(i, i + batchSize));
+            }
+
+            let batchIndex = 0;
+            function sendNextBatch() {
+                if (batchIndex >= batches.length) return;
+
+                const batch = batches[batchIndex];
+                console.log(`Sending batch ${batchIndex+1}/${batches.length}:`, batch);
+
+                batch.forEach((num, idx) => {
+                    setTimeout(() => {
+                        if (liveReports[batchId] && liveReports[batchId].details[num]?.status === 'pending') {
+                            const rand = Math.random();
+                            if (rand < 0.8) {
+                                liveReports[batchId].details[num].status = 'sent';
+                                liveReports[batchId].sent++;
+                            } else {
+                                liveReports[batchId].details[num].status = 'failed';
+                                liveReports[batchId].details[num].reason = 'network error';
+                                liveReports[batchId].failed++;
+                            }
+                            liveReports[batchId].pending--;
+                            updateReportUI(batchId);
+                        }
+                    }, idx * 1000);
+                });
+
+                batchIndex++;
+                setTimeout(sendNextBatch, batch.length * 1000 + 3000);
+            }
+
+            sendNextBatch();
+        }
+
+        function updateReportUI(batchId) {
+            const report = liveReports[batchId];
+            if (!report) return;
+
+            document.getElementById('statSent').innerText = report.sent;
+            document.getElementById('statFailed').innerText = report.failed;
+            document.getElementById('statPending').innerText = report.pending;
+
+            let listHtml = '';
+            Object.entries(report.details).forEach(([number, data]) => {
+                let icon = '';
+                let reasonHtml = '';
+                if (data.status === 'sent') {
+                    icon = '<i class="fas fa-check-circle sent"></i>';
+                } else if (data.status === 'failed') {
+                    icon = '<i class="fas fa-times-circle failed"></i>';
+                    reasonHtml = `<span class="report-reason" title="${data.reason}">${data.reason}</span>`;
+                } else {
+                    icon = '<i class="fas fa-clock pending"></i>';
+                }
+                listHtml += `
+                    <div class="report-item ${data.status}">
+                        <span class="report-number">${number}</span>
+                        <div class="report-status">
+                            ${icon}
+                            ${reasonHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('reportList').innerHTML = listHtml;
+        }
+
+        // press enter to login
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                doLogin();
+            }
+        });
+    </script>
+</body>
+</html>
