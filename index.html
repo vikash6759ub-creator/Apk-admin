@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal v8.0</title>
+    <title>Secure Terminal v9.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
         :root {
@@ -11,70 +11,75 @@
             --pink: #ff00ff; --red: #ff3131; --yellow: #fefe33;
         }
         * { box-sizing: border-box; font-family: 'Consolas', monospace; }
-        body { background: var(--bg); color: #fff; margin: 0; padding: 15px; position: relative; }
+        body { background: var(--bg); color: #fff; margin: 0; padding: 10px; }
 
-        /* ⏳ Digital Countdown - Right Top Only */
-        #countdown {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 0.85rem;
-            color: var(--red);
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-shadow: 0 0 5px rgba(255, 49, 49, 0.5);
+        /* 🔐 Login Screen */
+        #loginScreen {
+            position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg);
+            z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+        .login-box { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--blue); text-align: center; width: 90%; max-width: 350px; }
+        .logo-gear { font-size: 3rem; color: var(--blue); margin-bottom: 15px; animation: spin 4s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; text-align: center; }
+        .btn-login { width: 100%; padding: 12px; background: var(--blue); color: #000; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; }
 
-        /* 📋 Device List Container (Added padding to avoid overlap with timer) */
-        #deviceContainer { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
-        
+        /* 📊 Dashboard Layout */
+        #dashboard { display: none; }
+        .top-stats { display: flex; justify-content: space-around; background: var(--card); padding: 10px; border-radius: 12px; margin-bottom: 15px; border-bottom: 2px solid var(--pink); font-size: 0.75rem; }
+        .stat-item { text-align: center; }
+        .stat-val { display: block; font-size: 1.1rem; font-weight: bold; }
+
+        /* ⏳ Timer Right Top */
+        #countdown { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; color: var(--red); }
+
+        /* 📋 Device Cards */
+        #deviceContainer { display: flex; flex-direction: column; gap: 8px; }
         .device-card {
             background: var(--card); border: 1px solid #222; border-radius: 12px;
             padding: 12px; display: flex; align-items: center; justify-content: space-between;
-            transition: 0.2s; cursor: pointer; border-left: 3px solid var(--blue);
         }
-        .device-card:active { transform: scale(0.98); }
-
-        .serial { color: var(--yellow); font-weight: bold; width: 25px; font-size: 1rem; }
-        .dev-main { flex: 1; margin-left: 10px; }
-        .brand { font-size: 0.95rem; color: #fff; font-weight: bold; text-transform: uppercase; }
-        .sub-text { font-size: 0.7rem; color: #666; }
-
-        /* Status & Battery */
-        .status-box { text-align: right; }
-        .batt { font-weight: bold; font-size: 0.85rem; }
-        .on-tag { font-size: 0.55rem; color: var(--green); font-weight: bold; }
-
-        /* 📱 Popup Menu */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1000; backdrop-filter: blur(10px); }
-        .modal-content { background: #0c0c0c; width: 90%; max-width: 380px; margin: 30% auto; border-radius: 20px; padding: 20px; border: 1px solid var(--blue); position: relative; text-align: center; }
-        .close { position: absolute; right: 15px; top: 10px; font-size: 24px; color: var(--red); cursor: pointer; }
-
-        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .menu-box { background: #151515; padding: 15px; border-radius: 15px; border: 1px solid #333; }
-        .menu-box i { font-size: 1.4rem; margin-bottom: 8px; display: block; }
+        .serial { color: var(--yellow); font-weight: bold; width: 25px; }
+        .brand { font-size: 0.9rem; color: var(--blue); font-weight: bold; }
         
-        .c-sms { color: var(--blue); } .c-view { color: var(--yellow); }
-        .c-user { color: var(--pink); } .c-dev { color: var(--green); }
+        /* 📱 Popup */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; backdrop-filter: blur(10px); }
+        .modal-content { background: #0c0c0c; width: 90%; max-width: 380px; margin: 25% auto; border-radius: 20px; padding: 20px; border: 1px solid var(--blue); position: relative; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="countdown">30d 00h 00m 00s</div>
-
-    <div id="deviceContainer">
+    <div id="loginScreen">
+        <div class="login-box">
+            <div class="logo-gear">⚙️</div>
+            <h2 style="color:var(--blue)">ADMIN LOGIN</h2>
+            <input type="text" id="user" placeholder="Username (ADMIN)">
+            <input type="password" id="pass" placeholder="Password (2580)">
+            <button class="btn-login" onclick="checkLogin()">UNLOCK SYSTEM</button>
+            <p id="err" style="color:var(--red); font-size: 0.8rem; margin-top: 10px;"></p>
         </div>
+    </div>
+
+    <div id="dashboard">
+        <div id="countdown">30d 00h 00m 00s</div>
+        
+        <div class="top-stats">
+            <div class="stat-item">Total<span class="stat-val" id="totalCnt">0</span></div>
+            <div class="stat-item" style="color:var(--green)">Online<span class="stat-val" id="onlineCnt">0</span></div>
+            <div class="stat-item" style="color:var(--red)">Offline<span class="stat-val" id="offlineCnt">0</span></div>
+        </div>
+
+        <div id="deviceContainer">
+            </div>
+    </div>
 
     <div id="menuModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3 id="popBrand" style="color:var(--blue); font-size:1.1rem; margin-bottom:15px;">DEVICE</h3>
-            
-            <div class="grid-menu">
-                <div class="menu-box c-sms" onclick="alert('CSV Broadcaster Ready')"><i class="fas fa-paper-plane"></i>SEND SMS</div>
-                <div class="menu-box c-view" onclick="alert('Fetching Logs...')"><i class="fas fa-history"></i>VIEW SMS</div>
-                <div class="menu-box c-user" onclick="alert('User Info Loaded')"><i class="fas fa-user-circle"></i>DETAILS</div>
-                <div class="menu-box c-dev" onclick="alert('Hardware Stats')"><i class="fas fa-microchip"></i>HARDWARE</div>
+            <span style="position:absolute; top:10px; right:20px; cursor:pointer; color:var(--red)" onclick="document.getElementById('menuModal').style.display='none'">×</span>
+            <h3 id="popBrand" style="color:var(--blue)">DEVICE</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                <div style="background:#151515; padding:15px; border-radius:10px;">📩 SEND SMS</div>
+                <div style="background:#151515; padding:15px; border-radius:10px;">📜 VIEW SMS</div>
             </div>
         </div>
     </div>
@@ -82,59 +87,65 @@
     <script>
         const API_URL = 'https://sms-tracker-worker.vikash6759ub.workers.dev/api/get-data';
         
-        // ⏳ 30 Days Timer Logic (Simplified)
-        let expiryDate = localStorage.getItem('v8_exp');
-        if (!expiryDate) {
-            expiryDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
-            localStorage.setItem('v8_exp', expiryDate);
-        }
-
-        function runTimer() {
-            const diff = expiryDate - new Date().getTime();
-            if (diff <= 0) {
-                document.body.innerHTML = "<div style='color:red; text-align:center; padding-top:100px;'>EXPIRED</div>";
-                return;
+        function checkLogin() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if(u === "ADMIN" && p === "2580") {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                fetchData();
+                setInterval(fetchData, 5000); // 5s Refresh
+                startTimer();
+            } else {
+                document.getElementById('err').innerText = "Access Denied: Invalid Credentials";
             }
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById('countdown').innerText = `${d}d ${h}h ${m}m ${s}s`;
         }
-        setInterval(runTimer, 1000);
 
-        // 📡 Data Fetch (5s Refresh)
         async function fetchData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 data.reverse(); 
-                
+
                 const container = document.getElementById('deviceContainer');
                 container.innerHTML = data.map((d, i) => `
-                    <div class="device-card" onclick='openModal(${JSON.stringify(d)})'>
+                    <div class="device-card" onclick="openMod('${d.brand}')">
                         <div class="serial">#${i + 1}</div>
-                        <div class="dev-main">
-                            <div class="brand">${d.brand || 'ANDROID'}</div>
-                            <div class="sub-text">${d.sim_info || 'Node'}</div>
+                        <div style="flex:1; margin-left:10px;">
+                            <div class="brand">${d.brand}</div>
+                            <div style="font-size:0.7rem; color:#666">${d.sim_info}</div>
                         </div>
-                        <div class="status-box">
-                            <div class="batt" style="color:${parseInt(d.battery) < 20 ? 'var(--red)' : 'var(--green)'}">${d.battery}%</div>
-                            <div class="on-tag">ONLINE</div>
+                        <div style="text-align:right">
+                            <div style="color:var(--green); font-size:0.8rem">${d.battery}%</div>
+                            <div style="font-size:0.5rem; color:var(--green)">ONLINE</div>
                         </div>
                     </div>
                 `).join('');
+
+                // Update Stats
+                document.getElementById('totalCnt').innerText = data.length;
+                document.getElementById('onlineCnt').innerText = data.length; // Logic for offline can be added later
+                document.getElementById('offlineCnt').innerText = "0";
             } catch (e) { }
         }
 
-        function openModal(d) {
-            document.getElementById('popBrand').innerText = d.brand;
+        function openMod(brand) {
+            document.getElementById('popBrand').innerText = brand;
             document.getElementById('menuModal').style.display = 'block';
         }
-        function closeModal() { document.getElementById('menuModal').style.display = 'none'; }
 
-        fetchData();
-        setInterval(fetchData, 5000);
+        function startTimer() {
+            let exp = localStorage.getItem('v9_exp') || new Date().getTime() + (30*24*60*60*1000);
+            localStorage.setItem('v9_exp', exp);
+            setInterval(() => {
+                let diff = exp - new Date().getTime();
+                let d = Math.floor(diff/86400000);
+                let h = Math.floor((diff%86400000)/3600000);
+                let m = Math.floor((diff%3600000)/60000);
+                let s = Math.floor((diff%60000)/1000);
+                document.getElementById('countdown').innerText = `${d}d ${h}h ${m}m ${s}s`;
+            }, 1000);
+        }
     </script>
 </body>
 </html>
