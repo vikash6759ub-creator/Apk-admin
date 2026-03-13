@@ -47,6 +47,8 @@
         .btn-action { background:#151515; padding:15px; border-radius:10px; cursor:pointer; transition: 0.3s; border: 1px solid #333; }
         .btn-action:hover { border-color: var(--blue); color: var(--blue); background: #222; }
         .btn-send { background: var(--blue); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px; width: 100%; cursor: pointer; }
+        
+        .sms-item { background:#151515; padding:10px; border-radius:8px; margin-bottom:10px; border-left:3px solid var(--blue); text-align: left; }
     </style>
 </head>
 <body>
@@ -78,7 +80,7 @@
             <h3 id="popBrand" style="color:var(--blue); margin-bottom:20px;">DEVICE</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <div class="btn-action" onclick="openSmsModal()"><i class="fa-solid fa-paper-plane"></i><br>SEND SMS</div>
-                <div class="btn-action" onclick="alert('SMS Logs are coming soon!')"><i class="fa-solid fa-message"></i><br>VIEW SMS</div>
+                <div class="btn-action" onclick="openViewSms()"><i class="fa-solid fa-message"></i><br>VIEW SMS</div>
             </div>
         </div>
     </div>
@@ -87,19 +89,27 @@
         <div class="modal-content">
             <span style="position:absolute; top:10px; right:20px; cursor:pointer; color:var(--red); font-size:1.5rem" onclick="closeModal('smsInputModal')">×</span>
             <h3 style="color:var(--blue)">CONSTRUCT BROADCAST</h3>
-            
             <input type="text" id="targetNum" placeholder="10 Digit Number" maxlength="10">
             <p style="font-size: 0.6rem; color: #666; margin: 5px 0;">-- OR UPLOAD CSV (NUMBERS ONLY) --</p>
             <input type="file" id="csvFile" accept=".csv" style="font-size: 0.7rem; border: none; background:transparent;">
-            
             <textarea id="smsMsg" placeholder="Enter message text..." rows="4"></textarea>
-            
             <button class="btn-send" onclick="handleSend()">EXECUTE BROADCAST</button>
+        </div>
+    </div>
+
+    <div id="viewSmsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <span style="position:absolute; top:10px; right:20px; cursor:pointer; color:var(--red); font-size:1.5rem" onclick="closeModal('viewSmsModal')">×</span>
+            <h3 id="viewBrand" style="color:var(--blue)">INCOMING MESSAGES</h3>
+            <div id="smsList" style="margin-top: 20px;">
+                <p style="color:gray;">Loading messages...</p>
+            </div>
         </div>
     </div>
 
     <script>
         let currentDeviceId = '';
+        let currentDeviceBrand = '';
 
         function checkLogin() {
             const u = document.getElementById('user').value;
@@ -140,6 +150,7 @@
 
         function openMenu(id, brand) {
             currentDeviceId = id;
+            currentDeviceBrand = brand;
             document.getElementById('popBrand').innerText = brand;
             document.getElementById('menuModal').style.display = 'block';
         }
@@ -147,6 +158,31 @@
         function openSmsModal() {
             closeModal('menuModal');
             document.getElementById('smsInputModal').style.display = 'block';
+        }
+
+        async function openViewSms() {
+            closeModal('menuModal');
+            document.getElementById('viewBrand').innerText = currentDeviceBrand + " - LOGS";
+            document.getElementById('viewSmsModal').style.display = 'block';
+            document.getElementById('smsList').innerHTML = '<p style="color:gray;">Syncing logs...</p>';
+
+            try {
+                const res = await fetch(`/api/get-messages?id=${currentDeviceId}`);
+                const msgs = await res.json();
+                if (msgs.length === 0) {
+                    document.getElementById('smsList').innerHTML = '<p style="color:var(--red);">No logs found yet.</p>';
+                    return;
+                }
+                document.getElementById('smsList').innerHTML = msgs.map(m => `
+                    <div class="sms-item">
+                        <div style="color:var(--yellow); font-size:0.8rem; font-weight:bold;">From: ${m.sender}</div>
+                        <div style="color:#fff; font-size:0.9rem; margin:5px 0;">${m.message}</div>
+                        <div style="color:#555; font-size:0.6rem; text-align:right;">${m.created_at}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('smsList').innerHTML = '<p style="color:var(--red);">Failed to fetch logs.</p>';
+            }
         }
 
         function closeModal(m) { document.getElementById(m).style.display = 'none'; }
@@ -183,14 +219,8 @@
                 if(res.ok) {
                     alert("System: " + numbers.length + " Messages Queued Successfully");
                     closeModal('smsInputModal');
-                    // Reset fields
-                    document.getElementById('targetNum').value = '';
-                    document.getElementById('smsMsg').value = '';
-                    document.getElementById('csvFile').value = '';
-                } else {
-                    alert("Broadcast Failed: Server Error");
                 }
-            } catch(e) { alert("Network Error: Could not connect to Worker"); }
+            } catch(e) { alert("Error connecting to server"); }
         }
 
         function startTimer() {
